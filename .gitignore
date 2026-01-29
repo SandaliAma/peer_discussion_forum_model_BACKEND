@@ -1,0 +1,32 @@
+# Virtual environment
+venv/
+.env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Model files (if you don't want to track them in git)
+models/
+checkpoints/
+*.bin
+*.pt
+*.pth
+
+# Model / vector index outputs
+rag_index/
+
