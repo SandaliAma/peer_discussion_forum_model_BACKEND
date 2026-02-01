@@ -23,6 +23,7 @@ RAG_INDEX_DIR = os.path.join(BASE_DIR, "rag_index")
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 SCRIPTS_DIR = os.path.join(BASE_DIR, "scripts")
 TESTS_DIR = os.path.join(BASE_DIR, "tests")
+VALIDATION_LOGS_DIR = os.path.join(LOGS_DIR, "validation_data")  # For training data collection
 
 # Data file
 # MATH_PROBLEMS_JSON = os.path.join(DATA_DIR, "math_problems.json")
@@ -44,7 +45,7 @@ torch.set_num_threads(6)  # Use 6 of 8 cores
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 
 # Generation settings
-MAX_LENGTH = 128
+MAX_LENGTH = 384  # Increased from 128 for complete Sinhala step-by-step explanations
 TEMPERATURE = 0.7
 TOP_P = 0.9
 TOP_K = 30
@@ -52,7 +53,7 @@ REPETITION_PENALTY = 1.05
 
 # RAG SETTINGS
 
-NUM_EXAMPLES = 1
+NUM_EXAMPLES = 2  # Increased from 1 for better context
 EMBEDDING_BATCH_SIZE = 1  # Increased for your good CPU
 
 # FINE-TUNING SETTINGS
@@ -84,6 +85,13 @@ API_PORT = 5000
 API_DEBUG = False
 # timeout
 GENERATION_TIMEOUT = 60
+
+# GEMINI API SETTINGS (for validation and fallback)
+
+GEMINI_API_KEY = ""  # Add your Gemini API key here
+GEMINI_MODEL = "gemini-1.5-flash-latest"  # Updated to latest model name
+GEMINI_VALIDATION_ENABLED = True  # Set to False to disable validation
+GEMINI_TEMPERATURE = 0.3  # Lower for more consistent math answers
 # LOGGING
 
 LOG_LEVEL = "INFO"
@@ -94,7 +102,7 @@ LOG_FILE = os.path.join(LOGS_DIR, "math_rag.log")
 DEVICE = "cpu"
 
 # Create all directories
-for directory in [DATA_DIR, MODELS_DIR, RAG_INDEX_DIR, LOGS_DIR, SCRIPTS_DIR, TESTS_DIR]:
+for directory in [DATA_DIR, MODELS_DIR, RAG_INDEX_DIR, LOGS_DIR, SCRIPTS_DIR, TESTS_DIR, VALIDATION_LOGS_DIR]:
     os.makedirs(directory, exist_ok=True)
 
 os.makedirs(os.environ['HF_HOME'], exist_ok=True)
