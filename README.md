@@ -511,3 +511,17 @@ You're ready when you see:
 **Version**: 1.0.0  
 **Last Updated**: January 2025  
 **Optimized for**: Intel i7-11800H, 16GB RAM, Windows 11
+
+
+
+
+
+
+
+config.py	Configuration
+fast_api_server.py	Main API server
+groq_validator.py	Groq validation (current)
+math_rag_system.py	Core RAG system
+fine_tuner.py	For future fine-tuning
+requirements.txt	Dependencies
+test_groq.py	Test Groq API

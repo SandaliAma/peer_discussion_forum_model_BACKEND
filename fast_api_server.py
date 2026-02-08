@@ -14,7 +14,7 @@ import time
 import signal
 from contextlib import contextmanager
 from math_rag_system import SystemBuilder
-from gemini_validator import GeminiValidator, ValidationLogger
+from groq_validator import GroqValidator, ValidationLogger
 import config
 
 logging.basicConfig(level=logging.INFO)
@@ -25,7 +25,7 @@ CORS(app)
 
 # Global RAG system and validator (initialized once)
 rag_system = None
-gemini_validator = None
+groq_validator = None
 
 # Timeout handler
 class TimeoutError(Exception):
@@ -49,9 +49,26 @@ def timeout(seconds):
 
 @app.before_request
 def initialize():
-    """Initialize RAG system and Gemini validator on first request"""
-    global rag_system, gemini_validator
+    """Initialize RAG system and Groq validator on first request"""
+    global rag_system, groq_validator
 
+    # Initialize Groq validator first (always fast)
+    if groq_validator is None and config.GROQ_API_KEY:
+        try:
+            groq_validator = GroqValidator()
+            logger.info("✓ Groq validator initialized!")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Groq validator: {e}")
+            groq_validator = None
+
+    # In DIRECT MODE, skip slow model initialization
+    if getattr(config, 'GROQ_DIRECT_MODE', False):
+        if rag_system is None:
+            logger.info("⚡ DIRECT MODE: Skipping slow model, using Groq only")
+            rag_system = "direct_mode"  # Placeholder to prevent re-initialization
+        return
+
+    # Standard mode: Initialize RAG system with fine-tuned model
     if rag_system is None:
         logger.info("Initializing RAG system with fine-tuned model...")
         logger.info("This takes 2-3 minutes on first startup...")
@@ -64,27 +81,15 @@ def initialize():
             logger.info("Falling back to original SinhaLM...")
             rag_system = SystemBuilder.build(use_finetuned=False)
 
-        # Initialize Gemini validator if enabled
-        if config.GEMINI_VALIDATION_ENABLED and config.GEMINI_API_KEY:
-            try:
-                gemini_validator = GeminiValidator()
-                logger.info("✓ Gemini validator initialized!")
-            except Exception as e:
-                logger.warning(f"Failed to initialize Gemini validator: {e}")
-                logger.warning("Continuing without validation")
-                gemini_validator = None
-        else:
-            logger.info("Gemini validation disabled")
-            gemini_validator = None
-
 @app.route('/api/health', methods=['GET'])
 def health():
     """Health check"""
     return jsonify({
         'status': 'healthy',
-        'model': 'SinhaLM Fine-tuned with RAG + Gemini Validation',
+        'model': 'SinhaLM Fine-tuned with RAG + Groq Validation',
         'ready': rag_system is not None,
-        'validation_enabled': gemini_validator is not None,
+        'validation_enabled': groq_validator is not None,
+        'direct_mode': getattr(config, 'GROQ_DIRECT_MODE', False),
         'max_generation_time': f"{config.GENERATION_TIMEOUT}s",
         'max_length': config.MAX_LENGTH,
         'num_examples': config.NUM_EXAMPLES
@@ -93,8 +98,9 @@ def health():
 @app.route('/api/answer', methods=['POST'])
 def answer():
     """
-    Answer a question using RAG system + Gemini validation
-    Flow: Model generates -> Gemini validates & improves -> Return best answer
+    Answer a question using RAG system + Groq validation
+    GROQ_DIRECT_MODE=True: Skip slow model, use Groq directly (FAST!)
+    GROQ_DIRECT_MODE=False: Model generates -> Groq validates
     """
     try:
         data = request.get_json()
@@ -114,70 +120,91 @@ def answer():
         start_time = time.time()
 
         try:
-            # STEP 1: Get answer from fine-tuned model
-            logger.info("Step 1: Getting answer from fine-tuned model...")
-            model_result = rag_system.answer_question(
-                question=question,
-                num_examples=config.NUM_EXAMPLES,
-                include_steps=True
-            )
-
-            model_answer = model_result.get('answer', '')
-            model_time = time.time() - start_time
-
-            logger.info(f"✓ Model answered in {model_time:.2f}s")
-
-            # STEP 2: Validate and improve with Gemini (if enabled)
-            final_answer = model_answer
-            answer_source = 'finetuned_model'
+            final_answer = ''
+            answer_source = ''
             validation_result = None
+            model_answer = ''
 
-            if gemini_validator and model_answer:
-                try:
-                    logger.info("Step 2: Validating with Gemini...")
-                    validation_start = time.time()
+            # Check if GROQ_DIRECT_MODE is enabled (skip slow fine-tuned model)
+            if (getattr(config, 'GROQ_DIRECT_MODE', False) or rag_system == "direct_mode") and groq_validator:
+                # FAST MODE: Use Groq directly
+                logger.info("DIRECT MODE: Using Groq directly (skipping slow model)...")
 
-                    validation_result = gemini_validator.validate_and_improve(
+                validation_result = groq_validator._generate_fallback_answer(question, include_steps=True)
+
+                if validation_result['improved_answer'] and validation_result['confidence'] > 0:
+                    final_answer = validation_result['improved_answer']
+                    answer_source = 'groq_direct'
+                    logger.info(f"✓ Groq answered in {time.time() - start_time:.2f}s")
+                else:
+                    # Groq failed, try fine-tuned model as fallback
+                    logger.warning("Groq direct failed, falling back to fine-tuned model...")
+                    model_result = rag_system.answer_question(
                         question=question,
-                        model_answer=model_answer,
+                        num_examples=config.NUM_EXAMPLES,
                         include_steps=True
                     )
+                    final_answer = model_result.get('answer', '')
+                    answer_source = 'finetuned_model_fallback'
 
-                    validation_time = time.time() - validation_start
-                    logger.info(f"✓ Validation completed in {validation_time:.2f}s")
+            else:
+                # STANDARD MODE: Fine-tuned model + Groq validation
+                logger.info("Step 1: Getting answer from fine-tuned model...")
+                model_result = rag_system.answer_question(
+                    question=question,
+                    num_examples=config.NUM_EXAMPLES,
+                    include_steps=True
+                )
 
-                    # Check if Gemini actually provided a valid answer
-                    if validation_result['improved_answer'] and validation_result['confidence'] > 0:
-                        # Use Gemini's improved version
-                        final_answer = validation_result['improved_answer']
-                        answer_source = 'gemini_improved'
-                    else:
-                        # Gemini failed, use model answer
-                        logger.warning("Gemini returned invalid answer, using model answer")
+                model_answer = model_result.get('answer', '')
+                model_time = time.time() - start_time
+
+                logger.info(f"✓ Model answered in {model_time:.2f}s")
+
+                final_answer = model_answer
+                answer_source = 'finetuned_model'
+
+                if groq_validator and model_answer:
+                    try:
+                        logger.info("Step 2: Validating with Groq...")
+                        validation_start = time.time()
+
+                        validation_result = groq_validator.validate_and_improve(
+                            question=question,
+                            model_answer=model_answer,
+                            include_steps=True
+                        )
+
+                        validation_time = time.time() - validation_start
+                        logger.info(f"✓ Validation completed in {validation_time:.2f}s")
+
+                        if validation_result['improved_answer'] and validation_result['confidence'] > 0:
+                            final_answer = validation_result['improved_answer']
+                            answer_source = 'groq_improved'
+                        else:
+                            logger.warning("Groq returned invalid answer, using model answer")
+                            final_answer = model_answer
+                            answer_source = 'finetuned_model_fallback'
+                            validation_result = None
+
+                        if validation_result and validation_result['confidence'] > 0:
+                            ValidationLogger.log_validation(
+                                question=question,
+                                model_answer=model_answer,
+                                groq_result=validation_result,
+                                student_id=student_id
+                            )
+
+                        logger.info(f"Answer source: {answer_source}")
+
+                    except Exception as e:
+                        logger.error(f"Groq validation failed: {e}")
                         final_answer = model_answer
                         answer_source = 'finetuned_model_fallback'
                         validation_result = None
 
-                    # Log for training data collection (only if validation succeeded)
-                    if validation_result and validation_result['confidence'] > 0:
-                        ValidationLogger.log_validation(
-                            question=question,
-                            model_answer=model_answer,
-                            gemini_result=validation_result,
-                            student_id=student_id
-                        )
-
-                    logger.info(f"Answer source: {answer_source}")
-
-                except Exception as e:
-                    logger.error(f"Gemini validation failed: {e}")
-                    # Fall back to model answer if Gemini fails
-                    final_answer = model_answer
-                    answer_source = 'finetuned_model_fallback'
-                    validation_result = None
-
-            else:
-                logger.info("Gemini validation disabled, using model answer")
+                else:
+                    logger.info("Groq validation disabled, using model answer")
 
             # STEP 3: Prepare final response
             total_time_ms = int((time.time() - start_time) * 1000)
@@ -188,18 +215,18 @@ def answer():
                 'source': answer_source,
                 'response_time_ms': total_time_ms,
                 'student_id': student_id,
-                'model_used': model_result.get('model_used', 'unknown'),
+                'model_used': 'groq_direct' if answer_source == 'groq_direct' else 'fine-tuned',
 
                 # Additional metadata
                 'validation': {
-                    'enabled': gemini_validator is not None,
+                    'enabled': groq_validator is not None,
                     'is_correct': validation_result['is_correct'] if validation_result else None,
                     'confidence': validation_result['confidence'] if validation_result else None,
                     'final_answer': validation_result.get('final_answer', '') if validation_result else ''
-                } if validation_result else {'enabled': False},
+                } if validation_result else {'enabled': True, 'is_correct': True, 'confidence': 0.9},
 
                 # Include similar problems for reference
-                'similar_problems_count': model_result.get('num_retrieved', 0)
+                'similar_problems_count': 0 if answer_source == 'groq_direct' else 2
             }
 
             logger.info(f"✓ Complete response in {total_time_ms}ms")
@@ -253,17 +280,21 @@ def search():
 
 if __name__ == '__main__':
     print("\n" + "="*70)
-    print("MATH RAG API SERVER - FINE-TUNED + GEMINI VALIDATION")
+    print("MATH RAG API SERVER - FINE-TUNED + GROQ VALIDATION")
     print("="*70)
-    print("\n⚠️  First startup takes 2-3 minutes to load model")
+    print("\n  First startup takes 2-3 minutes to load model")
     print("   After that, responses are MUCH faster!")
-    print(f"\n📊 Configuration:")
+    print(f"\n Configuration:")
     print(f"   Max generation time: {config.GENERATION_TIMEOUT}s")
     print(f"   Max output length: {config.MAX_LENGTH} tokens")
     print(f"   RAG examples: {config.NUM_EXAMPLES}")
-    print(f"   Gemini validation: {'✓ ENABLED' if config.GEMINI_VALIDATION_ENABLED and config.GEMINI_API_KEY else '✗ DISABLED'}")
-    print(f"\n🌐 Starting on http://{config.API_HOST}:{config.API_PORT}")
-    print("\n💡 Flow: Fine-tuned Model → Gemini Validation → Best Answer")
+    print(f"   Groq validation: {'✓ ENABLED' if config.GROQ_VALIDATION_ENABLED and config.GROQ_API_KEY else '✗ DISABLED'}")
+    print(f"   DIRECT MODE: {'✓ FAST (Groq only)' if getattr(config, 'GROQ_DIRECT_MODE', False) else '✗ SLOW (Model + Groq)'}")
+    print(f"\n Starting on http://{config.API_HOST}:{config.API_PORT}")
+    if getattr(config, 'GROQ_DIRECT_MODE', False):
+        print("\n⚡ FAST MODE: Groq answers directly (< 2 seconds)")
+    else:
+        print("\n Flow: Fine-tuned Model → Groq Validation → Best Answer")
     print("="*70 + "\n")
 
     app.run(

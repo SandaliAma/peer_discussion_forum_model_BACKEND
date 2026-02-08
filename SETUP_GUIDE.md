@@ -1,6 +1,6 @@
 # MathRAG with Gemini Validation - Setup Guide
 
-## 🎯 What's New?
+##  What's New?
 
 Your system now uses a **hybrid approach**:
 1. **Fine-tuned model** generates initial answer
@@ -11,14 +11,14 @@ This ensures **correct answers** while you continue improving your fine-tuned mo
 
 ---
 
-## 📋 Prerequisites
+##  Prerequisites
 
 1. Python 3.8+
 2. Gemini API key from Google AI Studio
 
 ---
 
-## 🚀 Setup Instructions
+##  Setup Instructions
 
 ### Step 1: Install Dependencies
 
@@ -67,24 +67,24 @@ You should see:
 MATH RAG API SERVER - FINE-TUNED + GEMINI VALIDATION
 ======================================================================
 
-⚠️  First startup takes 2-3 minutes to load model
+  First startup takes 2-3 minutes to load model
    After that, responses are MUCH faster!
 
-📊 Configuration:
+ Configuration:
    Max generation time: 60s
    Max output length: 384 tokens
    RAG examples: 2
    Gemini validation: ✓ ENABLED
 
-🌐 Starting on http://0.0.0.0:5000
 
-💡 Flow: Fine-tuned Model → Gemini Validation → Best Answer
+
+ Flow: Fine-tuned Model → Gemini Validation → Best Answer
 ======================================================================
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Test 1: Health Check
 

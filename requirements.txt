@@ -21,8 +21,8 @@ scikit-learn>=1.3.0
 flask>=3.0.0
 flask-cors>=4.0.0
 
-# Gemini API (for validation)
-google-generativeai>=0.3.0
+# Groq API (for validation) - Fast Llama inference
+groq>=0.4.0
 
 # Utilities
 requests>=2.31.0

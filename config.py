@@ -5,6 +5,9 @@ D: Drive Version - Optimized for Intel i7-11800H with 16GB RAM
 
 import os
 import torch
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # FORCE HUGGING FACE TO USE D: DRIVE (MUST BE FIRST!)
 
@@ -86,12 +89,13 @@ API_DEBUG = False
 # timeout
 GENERATION_TIMEOUT = 60
 
-# GEMINI API SETTINGS (for validation and fallback)
+# GROQ API SETTINGS (for validation and fallback)
 
-GEMINI_API_KEY = ""  # Add your Gemini API key here
-GEMINI_MODEL = "gemini-1.5-flash-latest"  # Updated to latest model name
-GEMINI_VALIDATION_ENABLED = True  # Set to False to disable validation
-GEMINI_TEMPERATURE = 0.3  # Lower for more consistent math answers
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = "llama-3.3-70b-versatile"  # Fast and accurate for math
+GROQ_VALIDATION_ENABLED = True  # Set to False to disable validation
+GROQ_TEMPERATURE = 0.3  # Lower for more consistent math answers
+GROQ_DIRECT_MODE = False  # False = Use your fine-tuned model first, then Groq validates (SLOW but uses your training)
 # LOGGING
 
 LOG_LEVEL = "INFO"
