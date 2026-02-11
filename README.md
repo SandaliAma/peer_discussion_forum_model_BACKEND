@@ -516,7 +516,20 @@ You're ready when you see:
 
 
 
+Database: math_forum | Collection: math_responses
 
+
+{
+  "student_id": "test_user",
+  "question": "x + 5 = 10 නම් x හි අගය කීයද?",
+  "answer": "step by step solution...",
+  "source": "groq_improved",
+  "model_used": "fine-tuned",
+  "response_time_ms": 2500,
+  "validation": { "is_correct": true, "confidence": 0.95 },
+  "similar_problems_count": 2,
+  "created_at": "2026-02-08T..."
+}
 
 config.py	Configuration
 fast_api_server.py	Main API server

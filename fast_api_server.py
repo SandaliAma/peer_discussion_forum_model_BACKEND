@@ -16,6 +16,7 @@ from contextlib import contextmanager
 from math_rag_system import SystemBuilder
 from groq_validator import GroqValidator, ValidationLogger
 import config
+import db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -229,7 +230,22 @@ def answer():
                 'similar_problems_count': 0 if answer_source == 'groq_direct' else 2
             }
 
-            logger.info(f"✓ Complete response in {total_time_ms}ms")
+            logger.info(f"Complete response in {total_time_ms}ms")
+
+            # STEP 4: Save to MongoDB (non-blocking, won't fail the request)
+            try:
+                db.save_response(
+                    question=question,
+                    answer=final_answer,
+                    student_id=student_id,
+                    source=answer_source,
+                    model_used=response['model_used'],
+                    response_time_ms=total_time_ms,
+                    validation=response.get('validation'),
+                    similar_problems_count=response.get('similar_problems_count', 0)
+                )
+            except Exception as e:
+                logger.error(f"MongoDB save failed: {e}")
 
             return jsonify(response)
 

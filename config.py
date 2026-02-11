@@ -96,6 +96,13 @@ GROQ_MODEL = "llama-3.3-70b-versatile"  # Fast and accurate for math
 GROQ_VALIDATION_ENABLED = True  # Set to False to disable validation
 GROQ_TEMPERATURE = 0.3  # Lower for more consistent math answers
 GROQ_DIRECT_MODE = False  # False = Use your fine-tuned model first, then Groq validates (SLOW but uses your training)
+
+# MONGODB SETTINGS
+
+MONGO_URL = os.getenv("MONGO_URL", "")
+MONGO_DB_NAME = "math_forum"
+MONGO_COLLECTION = "math_responses"
+
 # LOGGING
 
 LOG_LEVEL = "INFO"
