@@ -40,18 +40,18 @@ FINETUNED_MODEL_PATH = os.path.join(MODELS_DIR, "math_finetuned")
 
 # CPU OPTIMIZATION - Optimized for Intel i7-11800H (8 cores, 16 threads)
 
-# # Intel MKL optimizations for faster math operations
-# os.environ['OMP_NUM_THREADS'] = '14'
-# os.environ['MKL_NUM_THREADS'] = '14'
-# os.environ['OPENBLAS_NUM_THREADS'] = '14'
-# os.environ['VECLIB_MAXIMUM_THREADS'] = '14'
-# os.environ['NUMEXPR_NUM_THREADS'] = '14'
+# Intel MKL optimizations for faster math operations
+os.environ['OMP_NUM_THREADS'] = '14'
+os.environ['MKL_NUM_THREADS'] = '14'
+os.environ['OPENBLAS_NUM_THREADS'] = '14'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '14'
+os.environ['NUMEXPR_NUM_THREADS'] = '14'
 
-# # Enable Intel MKL optimizations if available
-# os.environ['KMP_BLOCKTIME'] = '1'  # Lower blocking time for better responsiveness
-# os.environ['KMP_AFFINITY'] = 'granularity=fine,compact,1,0'  # Pin threads to cores
+# Enable Intel MKL optimizations if available
+os.environ['KMP_BLOCKTIME'] = '1'  # Lower blocking time for better responsiveness
+os.environ['KMP_AFFINITY'] = 'granularity=fine,compact,1,0'  # Pin threads to cores
 
-torch.set_num_threads(8)  
+torch.set_num_threads(14)
 # MODEL SETTINGS
 
 # Embedding model (supports Sinhala)

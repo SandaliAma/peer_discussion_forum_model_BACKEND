@@ -396,7 +396,7 @@ class SinhaLMMathRAG:
         base_model = AutoModelForCausalLM.from_pretrained(
             config.BASE_MODEL_NAME,
             device_map=config.DEVICE,
-            torch_dtype=torch.float32,
+            torch_dtype=torch.bfloat16,
             low_cpu_mem_usage=True
         )
         
@@ -535,7 +535,7 @@ class SinhaLMMathRAG:
         start_time = time.time()
 
         # Use inference_mode for better performance than no_grad
-        with torch.no_grad():
+        with torch.inference_mode():
             outputs = self.model.generate(
                 **inputs,
                 max_new_tokens=config.MAX_LENGTH,  # Use max_new_tokens instead
