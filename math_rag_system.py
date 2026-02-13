@@ -14,16 +14,24 @@ from datetime import datetime
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
+import sys
 
 import config
 
-# Setup logging
+# Setup logging with UTF-8 encoding for Windows
+if sys.platform == 'win32':
+    # Fix Unicode encoding errors on Windows console
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL),
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(config.LOG_FILE),
-        logging.StreamHandler()
+        logging.FileHandler(config.LOG_FILE, encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
@@ -516,7 +524,7 @@ class SinhaLMMathRAG:
             prompt,
             return_tensors="pt",
             truncation=True,
-            max_length=1024  # Reduced context
+            max_length=512
         )
         
         logger.info("Generating answer...")
@@ -525,22 +533,22 @@ class SinhaLMMathRAG:
         logger.info(f"Estimated time: 10-30 seconds on CPU")
         
         start_time = time.time()
-        
+
+        # Use inference_mode for better performance than no_grad
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
                 max_new_tokens=config.MAX_LENGTH,  # Use max_new_tokens instead
-                min_new_tokens=50,  # Ensure minimum response
+                # Removed min_new_tokens for faster generation
                 temperature=config.TEMPERATURE,
-                do_sample=config.TEMPERATURE > 0,
-                top_p=config.TOP_P,
-                top_k=config.TOP_K,
+                do_sample=config.TEMPERATURE > 0,  # Will be False when TEMPERATURE=0
+                top_p=config.TOP_P if config.TEMPERATURE > 0 else None,  # Only use with sampling
+                top_k=config.TOP_K if config.TEMPERATURE > 0 else None,  # Only use with sampling
                 repetition_penalty=config.REPETITION_PENALTY,
                 pad_token_id=self.tokenizer.eos_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
                 # CPU optimizations
                 use_cache=True,
-                early_stopping=True,
                 num_beams=1  # Greedy decoding - fastest
             )
         

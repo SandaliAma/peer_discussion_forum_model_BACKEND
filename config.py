@@ -38,17 +38,27 @@ BASE_MODEL_NAME = "google/gemma-2-2b-it"
 # Fine-tuned model path (will be created)
 FINETUNED_MODEL_PATH = os.path.join(MODELS_DIR, "math_finetuned")
 
-# CPU OPTIMIZATION - Use your 8 cores efficiently
+# CPU OPTIMIZATION - Optimized for Intel i7-11800H (8 cores, 16 threads)
 
-torch.set_num_threads(6)  # Use 6 of 8 cores
+# # Intel MKL optimizations for faster math operations
+# os.environ['OMP_NUM_THREADS'] = '14'
+# os.environ['MKL_NUM_THREADS'] = '14'
+# os.environ['OPENBLAS_NUM_THREADS'] = '14'
+# os.environ['VECLIB_MAXIMUM_THREADS'] = '14'
+# os.environ['NUMEXPR_NUM_THREADS'] = '14'
 
+# # Enable Intel MKL optimizations if available
+# os.environ['KMP_BLOCKTIME'] = '1'  # Lower blocking time for better responsiveness
+# os.environ['KMP_AFFINITY'] = 'granularity=fine,compact,1,0'  # Pin threads to cores
+
+torch.set_num_threads(8)  
 # MODEL SETTINGS
 
 # Embedding model (supports Sinhala)
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 
 # Generation settings
-MAX_LENGTH = 384  # Increased from 128 for complete Sinhala step-by-step explanations
+MAX_LENGTH = 64  # Reduced from 128 - math answers are typically shorter
 TEMPERATURE = 0.7
 TOP_P = 0.9
 TOP_K = 30
@@ -56,8 +66,8 @@ REPETITION_PENALTY = 1.05
 
 # RAG SETTINGS
 
-NUM_EXAMPLES = 2  # Increased from 1 for better context
-EMBEDDING_BATCH_SIZE = 1  # Increased for your good CPU
+NUM_EXAMPLES = 1 
+EMBEDDING_BATCH_SIZE = 1  # Increased to 4 to utilize multi-threading
 
 # FINE-TUNING SETTINGS
 
@@ -102,6 +112,21 @@ GROQ_DIRECT_MODE = False  # False = Use your fine-tuned model first, then Groq v
 MONGO_URL = os.getenv("MONGO_URL", "")
 MONGO_DB_NAME = "math_forum"
 MONGO_COLLECTION = "math_responses"
+
+# QUESTION FILTERING SETTINGS
+
+# Enable question filtering to block off-topic questions
+QUESTION_FILTERING_ENABLED = True
+
+# Strict topic filtering - Only allow questions about supported topics
+# True = Only allow: ලඝුගණක, ශ්‍රීඝ්‍රතාවය, සමාන්තර ශ්‍රේණි, equations
+# False = Allow all math questions (more flexible)
+STRICT_TOPIC_FILTERING = False
+
+# Use Groq API for intelligent question classification (slower but more accurate)
+# True = Use Groq to intelligently determine if question is math-related (~0.5-1s delay)
+# False = Use keyword-based filtering only (INSTANT ~0.001s, recommended for fast response)
+USE_GROQ_FOR_FILTERING = False  # Changed to False for instant blocking
 
 # LOGGING
 
