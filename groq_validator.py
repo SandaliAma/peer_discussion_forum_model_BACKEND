@@ -168,8 +168,8 @@ You are a math teacher who solves problems step by step in Sinhala language.
             else:
                 json_text = response_text.strip()
 
-            # Parse JSON
-            result = json.loads(json_text)
+            # Parse JSON (use strict=False to allow control characters in strings)
+            result = json.loads(json_text, strict=False)
 
             # Validate required fields
             required_fields = ['is_correct', 'confidence', 'improved_answer', 'final_answer']

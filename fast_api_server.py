@@ -15,6 +15,7 @@ import signal
 from contextlib import contextmanager
 from math_rag_system import SystemBuilder
 from groq_validator import GroqValidator, ValidationLogger
+from question_filter import QuestionFilter
 import config
 import db
 
@@ -40,6 +41,7 @@ CORS(app)
 # Global RAG system and validator (initialized once)
 rag_system = None
 groq_validator = None
+question_filter = QuestionFilter(use_groq_validation=False)
 
 # Timeout handler
 class TimeoutError(Exception):
@@ -129,6 +131,17 @@ def answer():
         student_id = data.get('student_id', 'anonymous')
 
         logger.info(f"Question from {student_id}: {question[:50]}...")
+
+        # Filter non-math questions
+        filter_result = question_filter.validate_question(question)
+        if not filter_result['is_valid']:
+            logger.info(f"Question filtered: {filter_result['category']}")
+            return jsonify({
+                'status': 'filtered',
+                'answer': filter_result['reason'],
+                'category': filter_result['category'],
+                'student_id': student_id
+            }), 200
 
         # Measure response time
         start_time = time.time()
