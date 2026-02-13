@@ -164,8 +164,8 @@ def validate_config():
     free_d_gb = free_d // (2**30)
     print(f"💾 D: Drive Free Space: {free_d_gb} GB")
     
-    if free_d_gb < 15:
-        errors.append(f"Not enough space on D: drive ({free_d_gb} GB free, need 15+ GB)")
+    if free_d_gb < 5:
+        errors.append(f"Not enough space on D: drive ({free_d_gb} GB free, need 5+ GB)")
     
     # Check data file
     if not os.path.exists(MATH_PROBLEMS_JSON):
