@@ -17,7 +17,20 @@ from math_rag_system import SystemBuilder
 from groq_validator import GroqValidator, ValidationLogger
 import config
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging with UTF-8 encoding for Windows
+import sys
+if sys.platform == 'win32':
+    # Fix Unicode encoding errors on Windows console
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)

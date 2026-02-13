@@ -8,10 +8,18 @@ import json
 import logging
 from typing import Dict, Optional
 from datetime import datetime
+import sys
 
 import config
 
-# Setup logging
+# Setup logging with UTF-8 encoding 
+if sys.platform == 'win32':
+    # Fix Unicode encoding errors on Windows console
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,7 +71,18 @@ class GroqValidator:
                 messages=[
                     {
                         "role": "system",
-                        "content": "ඔබ ගණිත ගුරුවරයෙකු වන අතර සිංහල භාෂාවෙන් ගණිත ගැටළු විසඳන්නෙකි. You are a math teacher who solves problems step by step in Sinhala language. Always respond in valid JSON format."
+                        "content": """ඔබ ගණිත ගුරුවරයෙකු වන අතර සිංහල භාෂාවෙන් ගණිත ගැටළු විසඳන්නෙකි.
+
+You are a math teacher who solves problems step by step in Sinhala language.
+
+**Important Rules:**
+- ONLY answer mathematics questions
+- Supported topics: ලඝුගණක (logarithms), ශ්‍රීඝ්‍රතාවය (velocity), සමාන්තර ශ්‍රේණි (arithmetic progression), equations
+- Do NOT answer: history, science, general knowledge, chitchat
+- Do NOT answer: questions requiring diagrams, images, shapes, graphs, or visual elements
+- If question mentions රූප/diagram/චිත්‍ර/image/හැඩ/shape/ප්‍රස්තාර/graph, decline politely
+- If question is not about math or requires visuals, set is_correct=false with validation note explaining why
+- Always respond in valid JSON format"""
                     },
                     {
                         "role": "user",
@@ -206,7 +225,7 @@ class GroqValidator:
                 messages=[
                     {
                         "role": "system",
-                        "content": "ඔබ ගණිත ගුරුවරයෙකි. සිංහල භාෂාවෙන් පියවරෙන් පියවර ගණිත ගැටළු විසඳන්න."
+                        "content": "ඔබ ගණිත ගුරුවරයෙකි. සිංහල භාෂාවෙන් පියවරෙන් පියවර ගණිත ගැටළු විසඳන්න. ONLY answer mathematics questions. Do NOT answer questions requiring diagrams, images, shapes, or graphs. If the question is not about math or requires visuals, politely decline."
                     },
                     {
                         "role": "user",
