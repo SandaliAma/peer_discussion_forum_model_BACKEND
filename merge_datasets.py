@@ -20,7 +20,7 @@ def load_json_file(filepath):
         print(f"   ✓ Loaded: {filepath.name}")
         return data
     except Exception as e:
-        print(f"   ❌ Error loading {filepath.name}: {e}")
+        print(f"    Error loading {filepath.name}: {e}")
         return None
 
 def extract_problems(data, filename):
@@ -125,7 +125,7 @@ def merge_all_datasets():
     data_path = Path(DATA_DIR)
     
     if not data_path.exists():
-        print(f"\n❌ Error: Directory '{DATA_DIR}' not found!")
+        print(f"\n Error: Directory '{DATA_DIR}' not found!")
         print(f"   Please create the directory or check the path.")
         return None
     
@@ -136,10 +136,10 @@ def merge_all_datasets():
     json_files = [f for f in json_files if f.name != os.path.basename(OUTPUT_FILE)]
     
     if not json_files:
-        print(f"\n❌ No JSON files found in '{DATA_DIR}' directory!")
+        print(f"\n No JSON files found in '{DATA_DIR}' directory!")
         return None
     
-    print(f"\n📁 Found {len(json_files)} JSON files:")
+    print(f"\n Found {len(json_files)} JSON files:")
     for f in json_files:
         print(f"   - {f.name}")
     
@@ -147,12 +147,12 @@ def merge_all_datasets():
     stats = {}
     format_stats = {}
     
-    print("\n📊 Processing files...")
+    print("\n Processing files...")
     print("-"*70)
     
     for json_file in json_files:
         filename = json_file.name
-        print(f"\n📄 {filename}")
+        print(f"\n {filename}")
         
         # Load file
         data = load_json_file(json_file)
@@ -167,7 +167,7 @@ def merge_all_datasets():
         problems = clean_problems(problems)
         
         if not problems:
-            print(f"   ⚠️  No valid problems found")
+            print(f"     No valid problems found")
             continue
         
         # Detect formats
@@ -188,19 +188,19 @@ def merge_all_datasets():
             format_stats[fmt] = format_stats.get(fmt, 0) + count
     
     if not all_problems:
-        print("\n❌ No valid problems found in any file!")
+        print("\n No valid problems found in any file!")
         return None
     
     print("\n" + "="*70)
-    print(f"✅ MERGE COMPLETE: {len(all_problems)} total problems")
+    print(f" MERGE COMPLETE: {len(all_problems)} total problems")
     print("="*70)
     
     # Show statistics
-    print("\n📊 Problems per file:")
+    print("\n Problems per file:")
     for filename, count in sorted(stats.items(), key=lambda x: x[1], reverse=True):
         print(f"   {filename:45s} : {count:4d} problems")
     
-    print("\n📋 Format distribution:")
+    print("\n Format distribution:")
     for fmt, count in sorted(format_stats.items()):
         print(f"   {fmt:20s} : {count:4d} problems")
     
@@ -219,7 +219,7 @@ def merge_all_datasets():
             sub_topic_counts[sub_topic] = sub_topic_counts.get(sub_topic, 0) + 1
     
     if len(topic_counts) > 1 or 'Unknown' not in topic_counts:
-        print("\n📚 Topics found (top 15):")
+        print("\n Topics found (top 15):")
         for topic, count in sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)[:15]:
             print(f"   {topic:45s} : {count:4d} problems")
         
@@ -227,7 +227,7 @@ def merge_all_datasets():
             print(f"   ... and {len(topic_counts) - 15} more topics")
     
     if sub_topic_counts:
-        print("\n📚 Sub-Topics found (top 10):")
+        print("\n Sub-Topics found (top 10):")
         for sub_topic, count in sorted(sub_topic_counts.items(), key=lambda x: x[1], reverse=True)[:10]:
             print(f"   {sub_topic:45s} : {count:4d} problems")
         
@@ -243,13 +243,13 @@ def merge_all_datasets():
             if not p.get(field):
                 missing_fields[field] += 1
     
-    print("\n📊 Required fields check:")
+    print("\n Required fields check:")
     for field, missing in missing_fields.items():
         has_count = len(all_problems) - missing
         print(f"   {field:15s}: {has_count}/{len(all_problems)} problems have it")
     
     # Save merged dataset
-    print(f"\n💾 Saving to: {OUTPUT_FILE}")
+    print(f"\n Saving to: {OUTPUT_FILE}")
     
     output_path = Path(OUTPUT_FILE)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -258,14 +258,14 @@ def merge_all_datasets():
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(all_problems, f, ensure_ascii=False, indent=2)
         
-        print("✅ Saved successfully!")
+        print(" Saved successfully!")
         
         # Show file size
         file_size = output_path.stat().st_size
-        print(f"📦 File size: {file_size:,} bytes ({file_size/1024:.1f} KB)")
+        print(f" File size: {file_size:,} bytes ({file_size/1024:.1f} KB)")
         
     except Exception as e:
-        print(f"❌ Error saving file: {e}")
+        print(f" Error saving file: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -280,20 +280,20 @@ def main():
         
         if merged:
             print("\n" + "="*70)
-            print("✅ ALL DONE!")
+            print(" ALL DONE!")
             print("="*70)
-            print(f"\n📌 Next steps:")
+            print(f"\n Next steps:")
             print(f"   1. The merged dataset has {len(merged)} problems")
             print(f"   2. Check config.py to ensure it points to: {OUTPUT_FILE}")
             print(f"   3. Run: python fine_tuner.py to train the model")
             print()
         else:
-            print("\n❌ Merge failed. Please check the errors above.")
+            print("\n Merge failed. Please check the errors above.")
         
     except KeyboardInterrupt:
-        print("\n\n⚠️  Interrupted by user")
+        print("\n\n  Interrupted by user")
     except Exception as e:
-        print(f"\n❌ ERROR: {e}")
+        print(f"\n ERROR: {e}")
         import traceback
         traceback.print_exc()
 

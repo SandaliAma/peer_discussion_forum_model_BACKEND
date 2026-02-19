@@ -28,7 +28,7 @@ def quick_test():
 def finetune():
     """Run fine-tuning"""
     print("\nStarting Fine-Tuning Process...\n")
-    print("⚠️  WARNING: This will take time on CPU!")
+    print("  WARNING: This will take time on CPU!")
     print("   Estimated: 1-4 hours depending on data size")
     print("   You can stop anytime with Ctrl+C\n")
     
@@ -68,7 +68,7 @@ def system_info():
     print("="*70)
     
     # Configuration
-    print("\n📁 Configuration:")
+    print("\n Configuration:")
     print(f"  Project: {config.BASE_DIR}")
     print(f"  Data file: {config.MATH_PROBLEMS_JSON}")
     print(f"  SinhaLM model: {config.SINHALM_MODEL_PATH}")
@@ -77,7 +77,7 @@ def system_info():
     print(f"  HF Cache: {os.environ.get('HF_HOME', 'Not set')}")
     
     # File status
-    print("\n✅ File Status:")
+    print("\n File Status:")
     print(f"  Data file: {'✓ Found' if os.path.exists(config.MATH_PROBLEMS_JSON) else '❌ Not found'}")
     print(f"  SinhaLM model: {'✓ Found' if os.path.exists(config.SINHALM_MODEL_PATH) else '❌ Not found'}")
     print(f"  Fine-tuned model: {'✓ Found' if os.path.exists(config.FINETUNED_MODEL_PATH) else '❌ Not trained yet'}")
@@ -88,7 +88,7 @@ def system_info():
     total_c, used_c, free_c = shutil.disk_usage("C:\\")
     total_d, used_d, free_d = shutil.disk_usage("D:\\")
     
-    print("\n💾 Disk Space:")
+    print("\n Disk Space:")
     print(f"  C: drive: {free_c // (2**30)} GB free")
     print(f"  D: drive: {free_d // (2**30)} GB free")
     
@@ -99,7 +99,7 @@ def system_info():
             problems = processor.process_all(config.MATH_PROBLEMS_JSON)
             stats = processor.get_statistics(problems)
             
-            print("\n📊 Problem Statistics:")
+            print("\n Problem Statistics:")
             print(f"  Total problems: {stats['total']}")
             print(f"  Topics: {len(stats['topics'])}")
             
@@ -110,7 +110,7 @@ def system_info():
                 print(f"  Sub-topics: {len(stats['sub_topics'])}")
                 
         except Exception as e:
-            print(f"\n❌ Error reading problems: {e}")
+            print(f"\n Error reading problems: {e}")
     
     print("\n" + "="*70)
 
@@ -119,7 +119,7 @@ def compare_models():
     import config
     
     if not os.path.exists(config.FINETUNED_MODEL_PATH):
-        print("\n❌ Fine-tuned model not found!")
+        print("\n Fine-tuned model not found!")
         print("   Please fine-tune the model first (Option 2)")
         return
     
@@ -134,7 +134,7 @@ def main():
     # Check configuration first
     import config
     if not config.validate_config():
-        print("\n❌ Configuration errors detected!")
+        print("\n Configuration errors detected!")
         print("Please fix the issues before proceeding.")
         return
     
@@ -160,13 +160,13 @@ def main():
                 print("\nExiting... අවසන්!")
                 break
             else:
-                print("\n❌ Invalid choice. Please enter 1-7.")
+                print("\n Invalid choice. Please enter 1-7.")
                 
         except KeyboardInterrupt:
             print("\n\nExiting... අවසන්!")
             break
         except Exception as e:
-            print(f"\n❌ Error: {e}")
+            print(f"\n Error: {e}")
             import traceback
             traceback.print_exc()
 

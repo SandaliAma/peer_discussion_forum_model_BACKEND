@@ -352,6 +352,6 @@ if __name__ == "__main__":
         print("="*70)
 
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()

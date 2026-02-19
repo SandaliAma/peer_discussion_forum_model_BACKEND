@@ -13,11 +13,11 @@ def print_result(question: str, result: dict):
     print("="*70)
     
     if result['status'] == 'success':
-        print(f"\n🤖 Model: {result['model_used']}")
-        print(f"\n📝 පිළිතුර:\n")
+        print(f"\n Model: {result['model_used']}")
+        print(f"\n පිළිතුර:\n")
         print(result['answer'])
         
-        print(f"\n🔍 සමාන ගැටළු: {result['num_retrieved']}")
+        print(f"\n සමාන ගැටළු: {result['num_retrieved']}")
         if result['similar_problems']:
             print("\nසමාන ගැටළු:")
             for i, sim in enumerate(result['similar_problems'][:3], 1):
@@ -25,7 +25,7 @@ def print_result(question: str, result: dict):
                 print(f"  {i}. {problem['question'][:60]}...")
                 print(f"     සමානත්වය: {sim['similarity']:.2%}")
     else:
-        print(f"\n❌ දෝෂය: {result.get('answer', 'Unknown error')}")
+        print(f"\n දෝෂය: {result.get('answer', 'Unknown error')}")
     
     print("="*70 + "\n")
 
@@ -132,6 +132,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n\nInterrupted by user. Exiting...")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()

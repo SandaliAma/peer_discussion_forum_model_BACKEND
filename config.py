@@ -157,12 +157,12 @@ def validate_config():
     print("="*70)
     
     # Check Hugging Face cache
-    print(f"\n📦 Hugging Face Cache: {os.environ['HF_HOME']}")
+    print(f"\n Hugging Face Cache: {os.environ['HF_HOME']}")
     
     # Check disk space
     total_d, used_d, free_d = shutil.disk_usage("D:\\")
     free_d_gb = free_d // (2**30)
-    print(f"💾 D: Drive Free Space: {free_d_gb} GB")
+    print(f" D: Drive Free Space: {free_d_gb} GB")
     
     if free_d_gb < 5:
         errors.append(f"Not enough space on D: drive ({free_d_gb} GB free, need 5+ GB)")
@@ -180,13 +180,13 @@ def validate_config():
         print(f"✓ SinhaLM model found: {SINHALM_MODEL_PATH}")
     
     if errors:
-        print("\n❌ ERRORS:")
+        print("\n ERRORS:")
         for e in errors:
             print(f"   - {e}")
         return False
     
     if warnings:
-        print("\n⚠️  WARNINGS:")
+        print("\n  WARNINGS:")
         for w in warnings:
             print(f"   - {w}")
     

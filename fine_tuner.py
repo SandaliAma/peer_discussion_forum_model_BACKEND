@@ -146,7 +146,7 @@ class MathSinhaLMFineTuner:
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         total_params = sum(p.numel() for p in self.model.parameters())
         
-        logger.info(f"\n📊 Model Statistics:")
+        logger.info(f"\n Model Statistics:")
         logger.info(f"   Trainable parameters: {trainable_params:,}")
         logger.info(f"   Total parameters: {total_params:,}")
         logger.info(f"   Trainable %: {100 * trainable_params / total_params:.2f}%")
@@ -196,7 +196,7 @@ class MathSinhaLMFineTuner:
         # Calculate training steps
         total_steps = (len(self.train_dataset) // (config.FINETUNE_BATCH_SIZE * config.FINETUNE_GRADIENT_ACCUMULATION)) * config.FINETUNE_EPOCHS
         
-        logger.info(f"\n📊 Training Configuration:")
+        logger.info(f"\n Training Configuration:")
         logger.info(f"   Training examples: {len(self.train_dataset)}")
         logger.info(f"   Validation examples: {len(self.val_dataset)}")
         logger.info(f"   Epochs: {config.FINETUNE_EPOCHS}")
@@ -207,7 +207,7 @@ class MathSinhaLMFineTuner:
         logger.info(f"   Learning rate: {config.FINETUNE_LEARNING_RATE}")
         
         # Estimate time
-        logger.info(f"\n⏱️  Estimated time on CPU:")
+        logger.info(f"\n  Estimated time on CPU:")
         logger.info(f"   ~{total_steps * 3 / 60:.1f} - {total_steps * 5 / 60:.1f} minutes")
         logger.info(f"   ({total_steps * 3 / 3600:.1f} - {total_steps * 5 / 3600:.1f} hours)")
         
@@ -249,7 +249,7 @@ class MathSinhaLMFineTuner:
         )
         
         # Train
-        logger.info("\n🚀 Starting training...\n")
+        logger.info("\n Starting training...\n")
         logger.info("="*70)
         
         start_time = datetime.now()
@@ -260,10 +260,10 @@ class MathSinhaLMFineTuner:
         duration = (end_time - start_time).total_seconds()
         
         logger.info("\n" + "="*70)
-        logger.info("✅ TRAINING COMPLETE!")
+        logger.info(" TRAINING COMPLETE!")
         logger.info("="*70)
-        logger.info(f"\n⏱️  Total training time: {duration / 60:.1f} minutes ({duration / 3600:.2f} hours)")
-        logger.info(f"📊 Final training loss: {train_result.training_loss:.4f}")
+        logger.info(f"\n  Total training time: {duration / 60:.1f} minutes ({duration / 3600:.2f} hours)")
+        logger.info(f" Final training loss: {train_result.training_loss:.4f}")
         
         # Save model
         self._save_model()
@@ -273,7 +273,7 @@ class MathSinhaLMFineTuner:
     def _save_model(self):
         """Save the fine-tuned model"""
         
-        logger.info(f"\n💾 Saving fine-tuned model to {config.FINETUNE_OUTPUT_DIR}")
+        logger.info(f"\n Saving fine-tuned model to {config.FINETUNE_OUTPUT_DIR}")
         
         self.model.save_pretrained(config.FINETUNE_OUTPUT_DIR)
         self.tokenizer.save_pretrained(config.FINETUNE_OUTPUT_DIR)
@@ -318,7 +318,7 @@ def run_finetuning():
     print(f"✓ Loaded {stats['total']} problems")
     
     if stats['total'] < 10:
-        print("\n⚠️  WARNING: Very few training examples!")
+        print("\n  WARNING: Very few training examples!")
         print("   Recommend at least 50-100 examples for good fine-tuning")
         proceed = input("   Continue anyway? (y/n): ")
         if proceed.lower() != 'y':
@@ -344,29 +344,29 @@ def run_finetuning():
     
     # Step 5: Train
     print("\n[STEP 5/5] Fine-tuning...")
-    print("\n⚠️  This will take time on CPU. You can monitor progress below.")
+    print("\n  This will take time on CPU. You can monitor progress below.")
     print("    Press Ctrl+C to stop training (model will be saved)\n")
     
     try:
         train_result = fine_tuner.train()
         
         print("\n" + "="*70)
-        print("✅ FINE-TUNING COMPLETE!")
+        print(" FINE-TUNING COMPLETE!")
         print("="*70)
-        print(f"\n📂 Model saved to: {config.FINETUNE_OUTPUT_DIR}")
+        print(f"\n Model saved to: {config.FINETUNE_OUTPUT_DIR}")
         print("\nYou can now use the fine-tuned model by running:")
         print("   python run_system.py")
         print("   Choose option 1 (Quick Test)")
         print("   When prompted, select 'Use fine-tuned model'")
         
     except KeyboardInterrupt:
-        print("\n\n⚠️  Training interrupted by user")
+        print("\n\n  Training interrupted by user")
         print("Saving current model state...")
         fine_tuner._save_model()
         print("Model saved. You can resume training or use the current checkpoint.")
     
     except Exception as e:
-        print(f"\n❌ Error during training: {e}")
+        print(f"\n Error during training: {e}")
         import traceback
         traceback.print_exc()
 

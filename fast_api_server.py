@@ -292,6 +292,129 @@ def answer():
             'error': str(e)
         }), 500
 
+@app.route('/api/guidelines', methods=['POST'])
+def guidelines():
+    """
+    Generate solving guidelines/hints for a math question (NOT the answer).
+    Used by the model paper component to help students.
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'question' not in data:
+            return jsonify({
+                'status': 'error',
+                'error': 'No question provided'
+            }), 400
+
+        question = data['question']
+        student_id = data.get('student_id', 'anonymous')
+
+        logger.info(f"Guidelines request from {student_id}: {question[:50]}...")
+
+        # Filter non-math questions
+        filter_result = question_filter.validate_question(question)
+        if not filter_result['is_valid']:
+            logger.info(f"Guidelines filtered: {filter_result['category']}")
+            return jsonify({
+                'status': 'filtered',
+                'message': filter_result['reason'],
+                'category': filter_result['category']
+            }), 200
+
+        start_time = time.time()
+
+        if not groq_validator:
+            return jsonify({
+                'status': 'error',
+                'error': 'Groq validator not available'
+            }), 503
+
+        # Use Groq to generate guidelines (fast, 2-3 seconds)
+        guidelines_prompt = f"""ප්‍රශ්නය: {question}
+
+You are a math tutor helping a student. Give 4-5 SHORT steps that GUIDE the student on what to do.
+
+CRITICAL RULES:
+- NEVER show any calculated values, numbers, or intermediate results
+- NEVER show factored forms, simplified expressions, or partial answers
+- Only tell the student WHAT METHOD to use, not the result of using it
+- Each step = ONE short Sinhala sentence
+- Return ONLY a JSON array
+
+GOOD example for "x² + 5x + 6 = 0 විසඳන්න":
+["සමීකරණය ax² + bx + c = 0 ආකෘතියේ ඇති බව තහවුරු කරන්න.", "ගුණිතය c වන සහ එකතුව b වන සංඛ්‍යා යුගලයක් සොයන්න.", "සාධක කිරීම මගින් සමීකරණය ලියන්න.", "එක් එක් සාධකය 0 ට සමාන කර x අගයන් සොයන්න."]
+
+BAD example (gives away the answer - DO NOT do this):
+["x² + 5x + 6 = (x+3)(x+2) = 0 ලෙස සරල කරන්න.", "x = -3 හෝ x = -2."]
+
+NOW give guidelines for: {question}"""
+
+        try:
+            response = groq_validator.client.chat.completions.create(
+                model=groq_validator.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a math tutor. Return ONLY a valid JSON array of short Sinhala strings. No markdown, no explanation, just the JSON array. Each string tells the student WHAT TO DO, never showing calculated numbers or intermediate results. Guide the method, not the answer."
+                    },
+                    {
+                        "role": "user",
+                        "content": guidelines_prompt
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=300
+            )
+
+            import json as json_lib
+            response_text = response.choices[0].message.content.strip()
+
+            # Parse the JSON array from response
+            try:
+                if "[" in response_text:
+                    arr_start = response_text.find("[")
+                    arr_end = response_text.rfind("]") + 1
+                    parsed = json_lib.loads(response_text[arr_start:arr_end], strict=False)
+                else:
+                    parsed = [response_text]
+
+                # If it parsed as a single string containing an array, parse again
+                if isinstance(parsed, list) and len(parsed) == 1 and isinstance(parsed[0], str) and "[" in parsed[0]:
+                    parsed = json_lib.loads(parsed[0], strict=False)
+
+                guidelines_list = [str(item) for item in parsed if str(item).strip() and str(item).strip().endswith('.')]
+            except Exception:
+                # Fallback: split by newlines
+                guidelines_list = [line.strip().strip('[],"').strip()
+                                   for line in response_text.split(",") if line.strip().strip('[],"').strip()]
+
+            total_time_ms = int((time.time() - start_time) * 1000)
+
+            logger.info(f"✓ Guidelines generated in {total_time_ms}ms")
+
+            return jsonify({
+                'status': 'success',
+                'question': question,
+                'guidelines': guidelines_list,
+                'student_id': student_id,
+                'response_time_ms': total_time_ms
+            })
+
+        except Exception as e:
+            logger.error(f"Groq guidelines generation failed: {e}")
+            return jsonify({
+                'status': 'error',
+                'error': 'Failed to generate guidelines'
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Guidelines error: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
 @app.route('/api/search', methods=['POST'])
 def search():
     """Search similar problems"""

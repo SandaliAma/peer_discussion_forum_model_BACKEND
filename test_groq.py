@@ -14,7 +14,7 @@ print(f"\n1. API Key: {'✓ Set' if config.GROQ_API_KEY else '✗ Not set'}")
 print(f"2. Model: {config.GROQ_MODEL}")
 
 if not config.GROQ_API_KEY:
-    print("\n❌ ERROR: No API key found in config.py")
+    print("\n ERROR: No API key found in config.py")
     print("Please add your Groq API key to config.py")
     exit(1)
 
@@ -49,7 +49,7 @@ try:
     print(f"   {answer}")
 
     print("\n" + "="*70)
-    print("✅ GROQ API WORKING CORRECTLY!")
+    print(" GROQ API WORKING CORRECTLY!")
     print("="*70)
 
     # Test with a more complex math question
@@ -79,14 +79,14 @@ try:
     print("-"*70)
 
     print("\n" + "="*70)
-    print("✅ ALL TESTS PASSED!")
+    print(" ALL TESTS PASSED!")
     print("="*70)
     print("\nYou can now restart the server:")
     print("   python fast_api_server.py")
 
 except Exception as e:
     print("\n" + "="*70)
-    print("❌ ERROR")
+    print(" ERROR")
     print("="*70)
     print(f"\nError: {e}")
     print("\nTroubleshooting:")

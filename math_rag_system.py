@@ -628,7 +628,7 @@ class SystemBuilder:
         )
         
         print("\n" + "="*70)
-        print("✅ SYSTEM BUILD COMPLETE!")
+        print(" SYSTEM BUILD COMPLETE!")
         print("="*70 + "\n")
         
         return rag_system
