@@ -129,8 +129,9 @@ def answer():
 
         question = data['question']
         student_id = data.get('student_id', 'anonymous')
+        chat_id = data.get('chat_id', 'default')
 
-        logger.info(f"Question from {student_id}: {question[:50]}...")
+        logger.info(f"Question from {student_id} (chat: {chat_id}): {question[:50]}...")
 
         # Filter non-math questions
         filter_result = question_filter.validate_question(question)
@@ -267,6 +268,7 @@ def answer():
                     source=answer_source,
                     model_used=response['model_used'],
                     response_time_ms=total_time_ms,
+                    chat_id=chat_id,
                     validation=response.get('validation'),
                     similar_problems_count=response.get('similar_problems_count', 0)
                 )
@@ -414,6 +416,74 @@ NOW give guidelines for: {question}"""
             'status': 'error',
             'error': str(e)
         }), 500
+
+@app.route('/api/history', methods=['GET'])
+def history():
+    """Get chat history for a student, grouped by chat sessions"""
+    try:
+        student_id = request.args.get('student_id', 'anonymous')
+        limit = int(request.args.get('limit', 20))
+
+        chats = db.get_history(student_id, limit=limit)
+
+        return jsonify({
+            'status': 'success',
+            'chats': chats,
+            'student_id': student_id
+        })
+
+    except Exception as e:
+        logger.error(f"History error: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/chat/delete', methods=['POST'])
+def delete_chat():
+    """Delete a chat session"""
+    try:
+        data = request.get_json()
+        chat_id = data.get('chat_id')
+        student_id = data.get('student_id', 'anonymous')
+
+        if not chat_id:
+            return jsonify({'status': 'error', 'error': 'No chat_id provided'}), 400
+
+        success = db.delete_chat(chat_id, student_id)
+
+        return jsonify({
+            'status': 'success' if success else 'not_found',
+            'chat_id': chat_id
+        })
+
+    except Exception as e:
+        logger.error(f"Delete chat error: {e}")
+        return jsonify({'status': 'error', 'error': str(e)}), 500
+
+@app.route('/api/chat/rename', methods=['POST'])
+def rename_chat():
+    """Rename a chat session"""
+    try:
+        data = request.get_json()
+        chat_id = data.get('chat_id')
+        student_id = data.get('student_id', 'anonymous')
+        title = data.get('title', '')
+
+        if not chat_id or not title:
+            return jsonify({'status': 'error', 'error': 'chat_id and title required'}), 400
+
+        success = db.rename_chat(chat_id, student_id, title)
+
+        return jsonify({
+            'status': 'success' if success else 'error',
+            'chat_id': chat_id,
+            'title': title
+        })
+
+    except Exception as e:
+        logger.error(f"Rename chat error: {e}")
+        return jsonify({'status': 'error', 'error': str(e)}), 500
 
 @app.route('/api/search', methods=['POST'])
 def search():
